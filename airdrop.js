@@ -3,8 +3,9 @@ import {
   createTransferInstruction
 } from "./chunk-MB5TRIOM.js";
 import {
-  getAssociatedTokenAddressSync
-} from "./chunk-OMTDKMSZ.js";
+  getAssociatedTokenAddressSync,
+  readTokenAmountOrZero
+} from "./chunk-VR7CWCWW.js";
 import {
   createAdminGate
 } from "./chunk-BGFIKFZK.js";
@@ -148,6 +149,7 @@ function init() {
   $("#gate-connect").addEventListener("click", onConnect);
   $("#connect").addEventListener("click", onConnect);
   $("#load-holders").addEventListener("click", () => withBusy($("#load-holders"), loadHolders));
+  $("#load-manual").addEventListener("click", loadManualList);
   $("#plan").addEventListener("click", () => withBusy($("#plan"), buildPlan));
   $("#export").addEventListener("click", exportCsv);
   $("#run").addEventListener("click", runAirdrop);
@@ -179,10 +181,10 @@ async function refreshSourceBalance() {
   if (!state.wallet || !state.mint) return;
   try {
     const ata = getAssociatedTokenAddressSync(new PublicKey(state.mint), state.wallet.publicKey);
-    const balance = await connection.getTokenAccountBalance(ata, "confirmed");
+    const balance = await readTokenAmountOrZero(connection, ata);
     setStatus(
       `\u53D1\u653E\u94B1\u5305 ${shorten(state.wallet.publicKey.toBase58())} \xB7 \u53EF\u53D1\u653E ${formatTokens(
-        BigInt(balance.value.amount),
+        balance,
         config.token.decimals
       )} BTF`,
       "ok"
@@ -220,6 +222,36 @@ async function loadHolders() {
       "error"
     );
   }
+}
+function loadManualList() {
+  const text = $("#manual-list").value.trim();
+  if (!text) return toast("\u8BF7\u7C98\u8D34\u540D\u5355", "error");
+  const rows = [];
+  const problems = [];
+  for (const line of text.split(/\n+/)) {
+    const [address, value] = line.split(/[,，\s]+/).filter(Boolean);
+    if (!address || !value) {
+      problems.push(line);
+      continue;
+    }
+    try {
+      new PublicKey(address);
+      rows.push({ owner: address, amount: parseTokens(value, config.token.decimals) });
+    } catch {
+      problems.push(line);
+    }
+  }
+  if (rows.length === 0) return toast("\u6CA1\u6709\u89E3\u6790\u51FA\u6709\u6548\u5730\u5740", "error");
+  state.holders = aggregateHolders(rows);
+  const total = [...state.holders.values()].reduce((acc, value) => acc + value, 0n);
+  $("#holders-summary").textContent = `\u624B\u52A8\u540D\u5355 ${state.holders.size} \u4E2A\u6301\u6709\u4EBA\uFF0C\u5408\u8BA1 ${formatTokens(
+    total,
+    config.token.decimals
+  )} BTF`;
+  setStatus(
+    problems.length ? `\u5DF2\u5BFC\u5165 ${rows.length} \u6761\uFF0C${problems.length} \u884C\u683C\u5F0F\u65E0\u6548\u5DF2\u8DF3\u8FC7` : `\u5DF2\u5BFC\u5165 ${rows.length} \u6761`,
+    problems.length ? "error" : "ok"
+  );
 }
 async function buildPlan() {
   if (state.holders.size === 0) {
