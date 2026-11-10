@@ -10,8 +10,9 @@ import {
 import {
   MINT_SIZE,
   getAssociatedTokenAddressSync,
-  getMinimumBalanceForRentExemptMint
-} from "./chunk-OMTDKMSZ.js";
+  getMinimumBalanceForRentExemptMint,
+  readTokenAmountOrZero
+} from "./chunk-VR7CWCWW.js";
 import {
   TokenInstruction,
   addSigners,
@@ -450,13 +451,7 @@ async function onVerify() {
       for (const item of config.distribution ?? []) {
         if (!item.wallet) continue;
         const ata = getAssociatedTokenAddressSync(mint, new PublicKey(item.wallet));
-        let balance = 0n;
-        try {
-          const result = await connection.getTokenAccountBalance(ata, "confirmed");
-          balance = BigInt(result.value.amount);
-        } catch {
-          balance = 0n;
-        }
+        const balance = await readTokenAmountOrZero(connection, ata);
         rows.push([`${item.label}\uFF08${item.pct}%\uFF09`, `${formatTokens(balance, parsed.decimals)} \u2192 ${item.wallet}`]);
       }
       const ok = !parsed.mintAuthority && !parsed.freezeAuthority;
