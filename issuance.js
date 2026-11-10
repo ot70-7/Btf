@@ -23,7 +23,7 @@ import {
   toast,
   walletHint,
   withBusy
-} from "./chunk-CECUWWW6.js";
+} from "./chunk-35EFKCYM.js";
 import {
   getConfig
 } from "./chunk-Y7EOAKKY.js";
@@ -456,9 +456,31 @@ async function onSetMetadata() {
       const signature = await signAndSend(connection, tx, state.wallet);
       toast(`\u5143\u6570\u636E\u5DF2\u5199\u5165\uFF1A${shorten(signature)}`, "ok");
     } catch (error) {
-      toast(error.message, "error");
+      if (await metadataExists(mint)) {
+        toast("\u5143\u6570\u636E\u5DF2\u5728\u94FE\u4E0A\uFF08\u94B1\u5305\u62A5\u9519\u4F46\u4EA4\u6613\u5DF2\u751F\u6548\uFF09\uFF0C\u65E0\u9700\u91CD\u590D\u5199\u5165", "ok", 9e3);
+        setStatus("\u5143\u6570\u636E\u5DF2\u5B58\u5728\u4E8E\u94FE\u4E0A\uFF0C\u53EF\u8FDB\u5165\u4E0B\u4E00\u6B65\u3002", "ok");
+        return;
+      }
+      toast(error.message, "error", 9e3);
     }
   });
+}
+async function readMintAuthorities(mintAddress) {
+  const info = await connection.getParsedAccountInfo(new PublicKey(mintAddress), "confirmed");
+  const parsed = info.value?.data?.parsed?.info;
+  return {
+    mintAuthority: parsed?.mintAuthority ?? null,
+    freezeAuthority: parsed?.freezeAuthority ?? null
+  };
+}
+async function metadataExists(mintAddress) {
+  const metaplex = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
+  const [pda] = PublicKey.findProgramAddressSync(
+    [Buffer.from("metadata"), metaplex.toBuffer(), new PublicKey(mintAddress).toBuffer()],
+    metaplex
+  );
+  const info = await connection.getAccountInfo(pda, "confirmed");
+  return Boolean(info);
 }
 async function onDistribute() {
   if (!requireWallet()) return;
@@ -530,7 +552,17 @@ async function onRevoke() {
       toast(`\u6743\u9650\u5DF2\u64A4\u9500\uFF1A${shorten(signature)}`, "ok");
       setStatus("Mint Authority \u4E0E Freeze Authority \u5DF2\u64A4\u9500\u3002\u8BF7\u6267\u884C\u9A8C\u8BC1\u3002", "ok");
     } catch (error) {
-      toast(error.message, "error");
+      const authorities = await readMintAuthorities(mint);
+      if (!authorities.mintAuthority && !authorities.freezeAuthority) {
+        toast("\u6743\u9650\u5DF2\u5728\u94FE\u4E0A\u64A4\u9500\uFF08\u94B1\u5305\u62A5\u9519\u4F46\u4EA4\u6613\u5DF2\u751F\u6548\uFF09", "ok", 9e3);
+        setStatus("Mint Authority \u4E0E Freeze Authority \u5747\u5DF2\u64A4\u9500\u3002\u8BF7\u6267\u884C\u9A8C\u8BC1\u3002", "ok");
+        return;
+      }
+      toast(error.message, "error", 9e3);
+      setStatus(
+        `\u64A4\u9500\u672A\u751F\u6548\uFF1AMint=${authorities.mintAuthority ? "\u4ECD\u5B58\u5728" : "\u65E0"}\uFF0CFreeze=${authorities.freezeAuthority ? "\u4ECD\u5B58\u5728" : "\u65E0"}`,
+        "error"
+      );
     }
   });
 }
