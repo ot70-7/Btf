@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <script>window.__AURA_CONFIG__={"network":"mainnet-beta","rpc":"https://solana-rpc.publicnode.com","token":{"name":"BUY THE FUTURE","symbol":"BTF","decimals":9,"supply":"1000000000","mint":"bWkp8s7e1AuYffULoa5arqzxgoymxK2SnhP79JPMUe8","projectWallet":"FW7zSDTrpYJhGuoy8nkABR77Kwzu2z8ovLdmR5WFthgs","description":"BTF — BUY THE FUTURE.\n\nBUY THE FUTURE. BUILD THE NEXT WORLD.\n\nBTF is more than a token. It represents a vision of a new digital future.\n\nWe believe the future is not something we wait for — it is something we build together.\n\nStarting with a community-driven digital asset, BTF aims to grow into a broader ecosystem through technology, innovation, and global participation.\n\nOur ambition is to build beyond a token: toward a connected digital economy, an independent network, and ultimately a new generation of blockchain infrastructure.\n\nOne Vision. One Community. One Future.\n\nBTF — BUY THE FUTURE.","logo":"assets/logo.png","logoUrl":"","website":"","x":"","telegram":"https://t.me/buythefuture"},"staking":{"_comment":"programId is a placeholder. Replace it with the ID printed by `anchor keys sync` before any deploy.","programId":"2wfUZNSyWqsu7ZkyUeqSJWyZP62ohHWoN7tAHDA3Z6SN","minStake":"1","tiers":[{"key":"flex","label":"灵活质押","aprBps":300,"lockSecs":0,"capSecs":31536000},{"key":"d30","label":"30 天","aprBps":500,"lockSecs":2592000,"capSecs":2592000},{"key":"d90","label":"90 天","aprBps":800,"lockSecs":7776000,"capSecs":7776000},{"key":"d180","label":"180 天","aprBps":1200,"lockSecs":15552000,"capSecs":15552000},{"key":"d360","label":"360 天","aprBps":1500,"lockSecs":31104000,"capSecs":31104000}]},"distribution":[{"label":"初始流动性","pct":10,"wallet":""},{"label":"社区及生态","pct":10,"wallet":""},{"label":"质押奖励储备","pct":10,"wallet":""},{"label":"项目发展储备/长期质押","pct":50,"wallet":""},{"label":"社区激励","pct":20,"wallet":""}]};</script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0d12" />
+    <title>钱包诊断</title>
+    <link rel="icon" type="image/png" href="./assets/favicon.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="app">
+      <span class="brand"><img src="./assets/logo.png" alt="BTF" width="22" height="22" /> 钱包诊断</span>
+      <span class="spacer"></span>
+      <a class="btn btn--small btn--ghost" href="./issuance.html">返回发行页</a>
+    </header>
+
+    <main>
+      <p class="status" id="status">正在读取当前浏览器可见的钱包接口…</p>
+
+      <section class="card">
+        <h2>探测结果</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>对象</th>
+                <th>connect</th>
+                <th>request</th>
+                <th>signAndSend</th>
+                <th>signTransaction</th>
+              </tr>
+            </thead>
+            <tbody id="candidates"></tbody>
+          </table>
+        </div>
+        <p class="small muted" id="hint"></p>
+      </section>
+
+      <section class="card stack">
+        <h2>Wallet Standard</h2>
+        <div id="standard" class="small muted"></div>
+      </section>
+
+      <section class="card stack">
+        <h2>操作</h2>
+        <button class="btn" id="try-connect" type="button">尝试连接钱包</button>
+        <button class="btn btn--ghost" id="copy-report" type="button">复制诊断信息</button>
+        <p class="small muted">
+          若「尝试连接」报错，请把复制的诊断信息发给我，我按你钱包真实暴露的接口适配。
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>原始信息</h2>
+        <pre class="mono" id="raw" style="white-space: pre-wrap; margin: 0"></pre>
+      </section>
+    </main>
+
+    <div id="toasts"></div>
+
+    <nav class="bottom">
+      <a href="./index.html">质押</a>
+      <a href="./admin.html">管理</a>
+      <a href="./issuance.html">发行</a>
+      <a href="./diagnose.html" class="is-active">诊断</a>
+    </nav>
+
+    <script type="module" src="./diagnose.js"></script>
+  </body>
+</html>
