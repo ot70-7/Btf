@@ -280,7 +280,7 @@ function init() {
   )} \xB7 ${config.token.decimals} \u4F4D\u5C0F\u6570`;
   renderDistribution();
   try {
-    const saved = localStorage.getItem("btf.mint");
+    const saved = localStorage.getItem("btf.mint") || config.token.mint;
     if (saved) {
       state.mintAddress = saved;
       showMintAddress(new PublicKey(saved));
