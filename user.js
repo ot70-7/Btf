@@ -19,7 +19,7 @@ import {
   t,
   toast,
   withBusy
-} from "./chunk-YTZY3SPC.js";
+} from "./chunk-PJU5X44T.js";
 import {
   PublicKey,
   SystemProgram,
@@ -1912,6 +1912,11 @@ function renderFooter() {
     } catch {
       website.textContent = config.token.website;
     }
+  }
+  const x = $("#x-link");
+  if (x && config.token.x) {
+    x.href = config.token.x;
+    x.textContent = config.token.x.replace(/^https?:\/\//, "");
   }
   const telegram = $("#telegram-link");
   if (telegram && config.token.telegram) {
