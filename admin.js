@@ -12,8 +12,9 @@ import {
   rewardPoolUsageBps
 } from "./chunk-QEHLEXUR.js";
 import {
-  getAssociatedTokenAddressSync
-} from "./chunk-OMTDKMSZ.js";
+  getAssociatedTokenAddressSync,
+  readTokenAmountOrZero
+} from "./chunk-VR7CWCWW.js";
 import {
   formatBps,
   formatDateTime,
@@ -134,8 +135,7 @@ async function refreshAll() {
 }
 async function tokenBalance(address) {
   try {
-    const result = await state.connection.getTokenAccountBalance(new PublicKey(address), "confirmed");
-    return BigInt(result.value.amount);
+    return await readTokenAmountOrZero(state.connection, new PublicKey(address));
   } catch {
     return 0n;
   }
