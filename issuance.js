@@ -277,8 +277,19 @@ function init() {
   $("#token-summary").textContent = `${config.token.name} (${config.token.symbol}) \xB7 \u4F9B\u5E94\u91CF ${formatTokens(
     BigInt(config.token.supply) * 10n ** BigInt(config.token.decimals),
     config.token.decimals
-  )} \xB7 ${config.token.decimals} \u4F4D\u5C0F\u6570`;
+  )} \xB7 ${config.token.decimals} \u4F4D\u5C0F\u6570${window.__AURA_BUILD__ ? ` \xB7 \u6784\u5EFA ${window.__AURA_BUILD__}` : ""}`;
   renderDistribution();
+  try {
+    const savedUri = localStorage.getItem("btf.metadataUri");
+    if (savedUri && !$("#metadata-uri").value) $("#metadata-uri").value = savedUri;
+  } catch {
+  }
+  $("#metadata-uri").addEventListener("input", (event) => {
+    try {
+      localStorage.setItem("btf.metadataUri", event.target.value.trim());
+    } catch {
+    }
+  });
   try {
     const saved = localStorage.getItem("btf.mint") || config.token.mint;
     if (saved) {
