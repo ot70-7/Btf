@@ -1,8 +1,10 @@
 import {
   AuthorityType,
-  createAdminGate,
   createSetAuthorityInstruction
-} from "./chunk-VHDUVOH5.js";
+} from "./chunk-YOPFFMX7.js";
+import {
+  createAdminGate
+} from "./chunk-BGFIKFZK.js";
 import {
   shorten
 } from "./chunk-XHYEPNL4.js";
