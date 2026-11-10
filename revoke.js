@@ -1,7 +1,8 @@
 import {
   AuthorityType,
+  createAdminGate,
   createSetAuthorityInstruction
-} from "./chunk-FOK276VK.js";
+} from "./chunk-VHDUVOH5.js";
 import {
   shorten
 } from "./chunk-XHYEPNL4.js";
@@ -31,8 +32,16 @@ import {
 var config = getConfig();
 var connection = getConnection();
 var state = { wallet: null, mint: config.token.mint };
+var gate = null;
 init();
 function init() {
+  gate = createAdminGate({
+    area: $("#admin-area"),
+    gate: $("#gate"),
+    status: $("#gate-status"),
+    onGranted: () => refreshAuthorities()
+  });
+  $("#gate-connect").addEventListener("click", onConnect);
   $("#connect").addEventListener("click", onConnect);
   $("#revoke-mint").addEventListener("click", () => revoke("mint"));
   $("#revoke-freeze").addEventListener("click", () => revoke("freeze"));
@@ -87,6 +96,11 @@ async function onConnect() {
   try {
     state.wallet = await connectWallet({ choose: chooseWallet });
     $("#connect").textContent = shorten(state.wallet.publicKey.toBase58());
+    const allowed = gate?.check(state.wallet.publicKey.toBase58());
+    if (!allowed) {
+      toast("\u5F53\u524D\u94B1\u5305\u4E0D\u662F\u7BA1\u7406\u5458\uFF0C\u64A4\u9500\u529F\u80FD\u672A\u89E3\u9501", "error", 8e3);
+      return;
+    }
     await refreshAuthorities();
   } catch (error) {
     toast(error.message, "error", 9e3);
