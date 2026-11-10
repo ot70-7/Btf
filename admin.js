@@ -94,17 +94,18 @@ async function onConnect() {
 }
 async function refreshAll() {
   try {
+    const owner = state.wallet?.publicKey?.toBase58();
+    state.isAdmin = Boolean(owner) && owner === (config.admin ?? "");
+    $("#admin-entry").classList.toggle("hide", !state.isAdmin);
     const pool = await fetchPool(state.connection);
     state.pool = pool;
     if (!pool) {
       setStatus("\u8D28\u62BC\u6C60\u5C1A\u672A\u521B\u5EFA\u3002\u8FDE\u63A5\u9879\u76EE\u65B9\u94B1\u5305\u540E\u53EF\u5728\u4E0B\u65B9\u5B8C\u6210\u4E00\u6B21\u6027\u521D\u59CB\u5316\u3002", "error");
-      $("#admin-only").classList.add("hide");
-      $("#init-card").classList.toggle("hide", !state.wallet);
+      $("#admin-only").classList.toggle("hide", !state.isAdmin);
+      $("#init-card").classList.toggle("hide", !state.isAdmin);
       return;
     }
     $("#init-card").classList.add("hide");
-    const owner = state.wallet?.publicKey?.toBase58();
-    state.isAdmin = Boolean(owner) && owner === pool.admin;
     const [positions, rewardBalance, principalBalance, supply] = await Promise.all([
       fetchAllPositions(state.connection),
       tokenBalance(pool.rewardVault),
