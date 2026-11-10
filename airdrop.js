@@ -254,6 +254,21 @@ function loadManualList() {
   );
 }
 async function buildPlan() {
+  try {
+    await buildPlanInner();
+  } catch (error) {
+    toast(error.message, "error", 9e3);
+    setStatus(`\u751F\u6210\u65B9\u6848\u5931\u8D25\uFF1A${error.message}`, "error");
+  }
+}
+function ataFor(owner) {
+  try {
+    return getAssociatedTokenAddressSync(new PublicKey(state.mint), new PublicKey(owner));
+  } catch {
+    return null;
+  }
+}
+async function buildPlanInner() {
   if (state.holders.size === 0) {
     toast("\u8BF7\u5148\u8BFB\u53D6\u6301\u4ED3", "error");
     return;
@@ -286,6 +301,15 @@ async function buildPlan() {
     return toast(error.message, "error");
   }
   if (rows.length === 0) return toast("\u65B9\u6848\u4E3A\u7A7A", "error");
+  const deliverable = rows.filter((row) => ataFor(row.owner));
+  const skipped = rows.length - deliverable.length;
+  if (deliverable.length === 0) {
+    throw new Error("\u540D\u5355\u4E2D\u6CA1\u6709\u53EF\u63A5\u6536\u4EE3\u5E01\u7684\u94B1\u5305\u5730\u5740\uFF08\u53EF\u80FD\u586B\u4E86\u4EE3\u5E01\u8D26\u6237\u6216\u7A0B\u5E8F\u5730\u5740\uFF09");
+  }
+  if (skipped > 0) {
+    setStatus(`\u5DF2\u8DF3\u8FC7 ${skipped} \u4E2A\u65E0\u6CD5\u63A5\u6536\u4EE3\u5E01\u7684\u5730\u5740\uFF08\u4EE3\u5E01\u8D26\u6237/\u7A0B\u5E8F\u5730\u5740\uFF09`, "error");
+  }
+  rows = deliverable;
   const existing = await checkAtas(rows.map((row) => row.owner));
   const createMissing = $("#create-atas").checked;
   const cost = estimateCost({
@@ -325,13 +349,14 @@ async function buildPlan() {
   setStatus(`\u65B9\u6848\u5DF2\u751F\u6210\uFF1A${rows.length} \u4E2A\u5730\u5740\uFF0C${cost.batches} \u6279\u3002`, "ok");
 }
 async function checkAtas(owners) {
-  const mint = new PublicKey(state.mint);
   const existing = /* @__PURE__ */ new Set();
   for (const group of chunk(owners, 100)) {
-    const atas = group.map((owner) => getAssociatedTokenAddressSync(mint, new PublicKey(owner)));
+    const valid = group.filter((owner) => ataFor(owner));
+    if (valid.length === 0) continue;
+    const atas = valid.map((owner) => ataFor(owner));
     const infos = await connection.getMultipleAccountsInfo(atas, "confirmed");
     infos.forEach((info, index) => {
-      if (info) existing.add(group[index]);
+      if (info) existing.add(valid[index]);
     });
   }
   return existing;
