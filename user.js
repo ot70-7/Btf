@@ -10,13 +10,16 @@ import {
   getConfig,
   getConnection,
   getTiers,
+  initI18n,
+  isMobileBrowser,
+  onLangChange,
   reviewTransaction,
   setStatus,
   signAndSend,
+  t,
   toast,
-  walletHint,
   withBusy
-} from "./chunk-7AWCEZ2K.js";
+} from "./chunk-YTZY3SPC.js";
 import {
   PublicKey,
   SystemProgram,
@@ -1013,7 +1016,7 @@ function clone(configObject) {
     return !!this.c && this.c[0] == 0;
   };
   P.minus = function(y, b) {
-    var i, j, t, xLTy, x = this, a = x.s;
+    var i, j, t2, xLTy, x = this, a = x.s;
     y = new BigNumber2(y, b);
     b = y.s;
     if (!a || !b) return new BigNumber2(NaN);
@@ -1037,14 +1040,14 @@ function clone(configObject) {
     if (a = xe - ye) {
       if (xLTy = a < 0) {
         a = -a;
-        t = xc;
+        t2 = xc;
       } else {
         ye = xe;
-        t = yc;
+        t2 = yc;
       }
-      t.reverse();
-      for (b = a; b--; t.push(0)) ;
-      t.reverse();
+      t2.reverse();
+      for (b = a; b--; t2.push(0)) ;
+      t2.reverse();
     } else {
       j = (xLTy = (a = xc.length) < (b = yc.length)) ? a : b;
       for (a = b = 0; b < j; b++) {
@@ -1055,9 +1058,9 @@ function clone(configObject) {
       }
     }
     if (xLTy) {
-      t = xc;
+      t2 = xc;
       xc = yc;
-      yc = t;
+      yc = t2;
       y.s = -y.s;
     }
     b = (j = yc.length) - (i = xc.length);
@@ -1158,7 +1161,7 @@ function clone(configObject) {
     return x;
   };
   P.plus = function(y, b) {
-    var t, x = this, a = x.s;
+    var t2, x = this, a = x.s;
     y = new BigNumber2(y, b);
     b = y.s;
     if (!a || !b) return new BigNumber2(NaN);
@@ -1177,21 +1180,21 @@ function clone(configObject) {
     if (a = xe - ye) {
       if (a > 0) {
         ye = xe;
-        t = yc;
+        t2 = yc;
       } else {
         a = -a;
-        t = xc;
+        t2 = xc;
       }
-      t.reverse();
-      for (; a--; t.push(0)) ;
-      t.reverse();
+      t2.reverse();
+      for (; a--; t2.push(0)) ;
+      t2.reverse();
     }
     a = xc.length;
     b = yc.length;
     if (a - b < 0) {
-      t = yc;
+      t2 = yc;
       yc = xc;
-      xc = t;
+      xc = t2;
       b = a;
     }
     for (a = 0; b; ) {
@@ -1227,7 +1230,7 @@ function clone(configObject) {
     return this.times("1e" + k);
   };
   P.squareRoot = P.sqrt = function() {
-    var m, n, r, rep, t, x = this, c = x.c, s = x.s, e = x.e, dp = DECIMAL_PLACES + 4, half = new BigNumber2("0.5");
+    var m, n, r, rep, t2, x = this, c = x.c, s = x.s, e = x.e, dp = DECIMAL_PLACES + 4, half = new BigNumber2("0.5");
     if (s !== 1 || !c || !c[0]) {
       return new BigNumber2(!s || s < 0 && (!c || c[0]) ? NaN : c ? x : 1 / 0);
     }
@@ -1252,16 +1255,16 @@ function clone(configObject) {
       s = e + dp;
       if (s < 3) s = 0;
       for (; ; ) {
-        t = r;
-        r = half.times(t.plus(div(x, t, dp, 1)));
-        if (coeffToString(t.c).slice(0, s) === (n = coeffToString(r.c)).slice(0, s)) {
+        t2 = r;
+        r = half.times(t2.plus(div(x, t2, dp, 1)));
+        if (coeffToString(t2.c).slice(0, s) === (n = coeffToString(r.c)).slice(0, s)) {
           if (r.e < e) --s;
           n = n.slice(s - 3, s + 1);
           if (n == "9999" || !rep && n == "4999") {
             if (!rep) {
-              round(t, t.e + DECIMAL_PLACES + 2, 0);
-              if (t.times(t).eq(x)) {
-                r = t;
+              round(t2, t2.e + DECIMAL_PLACES + 2, 0);
+              if (t2.times(t2).eq(x)) {
+                r = t2;
                 break;
               }
             }
@@ -1790,14 +1793,14 @@ function formatTokens(value, decimals = DECIMALS, maxFractionDigits = 4) {
 function withGrouping(value) {
   return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
-function parseTokens(text, decimals = DECIMALS) {
+function parseTokens(text, decimals = DECIMALS, messages = {}) {
   const clean = String(text).trim().replace(/,/g, "");
   if (!/^\d*(\.\d*)?$/.test(clean) || clean === "" || clean === ".") {
-    throw new Error("\u8BF7\u8F93\u5165\u6709\u6548\u6570\u91CF");
+    throw new Error(messages.invalid ?? "\u8BF7\u8F93\u5165\u6709\u6548\u6570\u91CF");
   }
   const [whole, fraction = ""] = clean.split(".");
   if (fraction.length > decimals) {
-    throw new Error(`\u6700\u591A\u652F\u6301 ${decimals} \u4F4D\u5C0F\u6570`);
+    throw new Error(messages.tooMany ?? `\u6700\u591A\u652F\u6301 ${decimals} \u4F4D\u5C0F\u6570`);
   }
   const padded = fraction.padEnd(decimals, "0");
   return BigInt(whole || "0") * 10n ** BigInt(decimals) + BigInt(padded || "0");
@@ -1806,14 +1809,6 @@ function formatBps(bps) {
   const value = Number(bps) / 100;
   const text = Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
   return `${text}%`;
-}
-function formatDuration(seconds) {
-  const value = Number(seconds);
-  if (value === 0) return "\u968F\u65F6\u53EF\u89E3\u9664";
-  const days = Math.round(value / 86400);
-  if (days % 30 === 0 && days < 360) return `${days} \u5929`;
-  if (days === 360) return "360 \u5929";
-  return `${days} \u5929`;
 }
 function formatDateTime(unixSeconds) {
   if (!unixSeconds) return "\u2014";
@@ -1839,6 +1834,7 @@ var state = {
   selectedTier: 0
 };
 var config = getConfig();
+initI18n();
 function nowSeconds() {
   return Math.floor(Date.now() / 1e3);
 }
@@ -1846,51 +1842,163 @@ function decodeError(error) {
   const message = error?.message ?? String(error);
   const anchorError = error?.error?.errorMessage;
   if (anchorError) return anchorError;
-  if (message.includes("User rejected")) return "\u4F60\u5DF2\u5728\u94B1\u5305\u4E2D\u53D6\u6D88\u4EA4\u6613";
-  if (message.includes("insufficient")) return "\u4F59\u989D\u4E0D\u8DB3\uFF0C\u6216\u624B\u7EED\u8D39\u4E0D\u8DB3";
+  if (message.includes("User rejected")) return t("error.rejected");
+  if (message.includes("insufficient")) return t("error.insufficient");
+  if (message.includes("\u672A\u9009\u62E9\u94B1\u5305")) return t("wallet.notSelected");
+  if (message.includes("\u672A\u8FD4\u56DE\u8D26\u6237")) return t("wallet.noAccount");
+  if (message.includes("\u68C0\u6D4B\u5230\u6CE8\u5165\u5BF9\u8C61")) return t("wallet.injected");
   return message;
+}
+function chooseWalletI18n(options) {
+  return chooseWallet(options, {
+    title: t("modal.chooseWalletTitle"),
+    subtitle: t("modal.chooseWalletSubtitle"),
+    cancel: t("common.cancel")
+  });
+}
+function walletHintText() {
+  const base2 = isMobileBrowser() ? t("wallet.hintMobile") : t("wallet.hintDesktop");
+  return `${base2} ${t("wallet.hintSuffix")}`;
+}
+function durationLabel(seconds) {
+  const days = Math.round(Number(seconds) / 86400);
+  return days === 0 ? t("tiers.unlockAnytime") : t("tiers.lockedDays", { days });
+}
+function parseAmount(text) {
+  return parseTokens(text, config.token.decimals, {
+    invalid: t("error.invalidAmount"),
+    tooMany: t("error.tooManyDecimals", { n: config.token.decimals })
+  });
+}
+function updateConnectButton() {
+  const button = $("#connect");
+  if (!button) return;
+  if (state.wallet) {
+    button.textContent = shorten(state.wallet.publicKey.toBase58());
+    button.dataset.connected = "true";
+    return;
+  }
+  button.dataset.connected = "false";
+  button.textContent = detectProviders().length === 0 ? t("header.openWallet") : t("header.connect");
+}
+function updateAmountLabel() {
+  const label = $("#amount-label");
+  if (label) label.textContent = t("amount.label", { symbol: config.token.symbol });
+}
+function syncStakeButton() {
+  const button = $("#stake-button");
+  if (!button) return;
+  if (!state.pool) {
+    button.disabled = true;
+    button.textContent = t("amount.stakeDisabled");
+    return;
+  }
+  if (state.pool.paused) {
+    button.disabled = true;
+    button.textContent = t("amount.stakePaused");
+    return;
+  }
+  button.disabled = false;
+  button.textContent = t("amount.stake");
+}
+function renderFooter() {
+  const mint = $("#contract-address");
+  if (mint) mint.textContent = config.token.mint || "\u2014";
+  const website = $("#website-link");
+  if (website && config.token.website) {
+    website.href = config.token.website;
+    try {
+      website.textContent = new URL(config.token.website).host;
+    } catch {
+      website.textContent = config.token.website;
+    }
+  }
+  const telegram = $("#telegram-link");
+  if (telegram && config.token.telegram) {
+    telegram.href = config.token.telegram;
+    telegram.textContent = config.token.telegram.replace(/^https?:\/\//, "");
+  }
+}
+function bindFooterCopy() {
+  const button = $("#copy-mint");
+  if (!button) return;
+  button.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(config.token.mint);
+      toast(t("footer.copied"), "ok");
+    } catch {
+      toast(t("footer.copyFailed"), "error");
+    }
+  });
+}
+function bindSectionNav() {
+  const links = Array.from(document.querySelectorAll("nav.bottom a[href^='#']"));
+  const setActive = (target) => {
+    for (const link of links) {
+      link.classList.toggle("is-active", link.getAttribute("href") === target);
+    }
+  };
+  for (const link of links) {
+    link.addEventListener("click", () => setActive(link.getAttribute("href")));
+  }
+  const sections = ["#top", "#stake"].map((selector) => document.querySelector(selector)).filter(Boolean);
+  if (!("IntersectionObserver" in window) || sections.length === 0) return;
+  const observer = new IntersectionObserver(
+    (entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting);
+      if (visible.length === 0) return;
+      visible.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+      setActive(`#${visible[0].target.id}`);
+    },
+    { rootMargin: "-35% 0px -55% 0px", threshold: [0, 0.2, 0.5] }
+  );
+  for (const section of sections) observer.observe(section);
 }
 init();
 async function init() {
   const badge = $("#network-badge");
-  badge.textContent = config.network === "mainnet-beta" ? "\u4E3B\u7F51" : config.network;
-  if (config.network === "mainnet-beta") badge.classList.add("badge--warn");
+  if (badge) {
+    badge.textContent = config.network === "mainnet-beta" ? t("network.mainnet") : config.network;
+    if (config.network === "mainnet-beta") badge.classList.add("badge--warn");
+  }
+  updateConnectButton();
+  updateAmountLabel();
+  renderFooter();
+  bindFooterCopy();
+  bindSectionNav();
   $("#connect").addEventListener("click", onConnect);
-  $("#stake").addEventListener("click", onStake);
+  $("#stake-button").addEventListener("click", onStake);
   $("#max").addEventListener("click", () => {
     $("#amount").value = formatTokens(state.balance, config.token.decimals, 9);
   });
   if (detectProviders().length === 0) {
-    $("#connect").textContent = "\u5728\u94B1\u5305\u4E2D\u6253\u5F00";
-    setStatus(walletHint(), "error");
+    setStatus(walletHintText(), "info");
   }
   renderTiers();
-  renderAbout();
   renderSummary();
   try {
     state.pool = await fetchPool(state.connection);
   } catch (error) {
-    setStatus(`\u8BFB\u53D6\u8D28\u62BC\u6C60\u5931\u8D25\uFF1A${decodeError(error)}`, "error");
+    setStatus(t("status.poolReadFailed", { error: decodeError(error) }), "error");
     return;
   }
   if (!state.pool) {
-    setStatus("\u8D28\u62BC\u6C60\u5C1A\u672A\u521B\u5EFA\uFF08\u7A0B\u5E8F\u5730\u5740\u53EF\u80FD\u4ECD\u662F\u5360\u4F4D\u503C\uFF0C\u6216\u9879\u76EE\u65B9\u5C1A\u672A\u521D\u59CB\u5316\uFF09\u3002", "error");
-    $("#stake").disabled = true;
-    $("#stake").textContent = "\u8D28\u62BC\u6C60\u672A\u5C31\u7EEA";
+    setStatus(t("status.poolMissing"), "error");
+    syncStakeButton();
     renderSummary();
     return;
   }
+  syncStakeButton();
   renderSummary();
 }
 async function onConnect() {
   if (detectProviders().length === 0) {
-    toast(walletHint(), "error", 8e3);
+    toast(walletHintText(), "error", 8e3);
     return;
   }
   try {
-    state.wallet = await connectWallet({ choose: chooseWallet });
-    $("#connect").textContent = shorten(state.wallet.publicKey.toBase58());
-    $("#connect").dataset.connected = "true";
+    state.wallet = await connectWallet({ choose: chooseWalletI18n });
+    updateConnectButton();
     await refresh();
   } catch (error) {
     toast(decodeError(error), "error");
@@ -1913,7 +2021,7 @@ async function refresh() {
     renderPositions();
     renderTiers();
   } catch (error) {
-    setStatus(`\u5237\u65B0\u5931\u8D25\uFF1A${decodeError(error)}`, "error");
+    setStatus(t("status.refreshFailed", { error: decodeError(error) }), "error");
   }
 }
 async function loadBalance(owner, pool) {
@@ -1926,7 +2034,9 @@ async function loadBalance(owner, pool) {
   }
 }
 function tierLabel(index) {
-  return getTiers()[index]?.label ?? `Tier ${index}`;
+  const tier = getTiers()[index];
+  if (tier?.key) return t(`tier.${tier.key}`);
+  return tier?.label ?? `Tier ${index}`;
 }
 function renderSummary() {
   const pool = state.pool;
@@ -1944,26 +2054,19 @@ function renderSummary() {
     el(
       "div",
       { class: "grid-2" },
-      statBox("\u4EE3\u5E01\u4F59\u989D", formatTokens(state.balance, config.token.decimals), config.token.symbol),
-      statBox("\u8D28\u62BC\u4E2D", formatTokens(staked, config.token.decimals), `${positions.length} \u4E2A\u4ED3\u4F4D`),
-      statBox("\u7D2F\u8BA1\u5DF2\u9886\u5956\u52B1", formatTokens(claimed, config.token.decimals), "\u94FE\u4E0A\u5DF2\u652F\u4ED8"),
-      statBox("\u5F53\u524D\u53EF\u9886\u53D6", formatTokens(outstanding, config.token.decimals), "\u6309\u79D2\u7D2F\u8BA1")
+      statBox(t("summary.balance"), formatTokens(state.balance, config.token.decimals), config.token.symbol),
+      statBox(
+        t("summary.staked"),
+        formatTokens(staked, config.token.decimals),
+        t("summary.positionsHint", { n: positions.length })
+      ),
+      statBox(t("summary.claimed"), formatTokens(claimed, config.token.decimals), t("summary.paidOnchain")),
+      statBox(t("summary.claimable"), formatTokens(outstanding, config.token.decimals), t("summary.accruing"))
     ),
-    el("p", { class: "small muted", text: `\u5404\u6863 APR\uFF1A${aprs}\uFF08APR \u4EE5\u4ED3\u4F4D\u5F00\u4ED3\u65F6\u8BB0\u5F55\u4E3A\u51C6\uFF09` })
+    el("p", { class: "small muted", text: t("summary.aprNote", { aprs }) })
   );
-  $("#summary-title").textContent = pool?.paused ? "\u8D28\u62BC\u6C60\u5DF2\u6682\u505C\u65B0\u8D28\u62BC" : "\u6211\u7684\u8D44\u4EA7";
-  if (pool?.paused) {
-    $("#stake").disabled = true;
-    $("#stake").textContent = "\u5F53\u524D\u6682\u505C\u63A5\u53D7\u65B0\u8D28\u62BC";
-  }
-}
-function renderAbout() {
-  const host = $("#about");
-  if (!host) return;
-  const text = config.token.description || "";
-  host.replaceChildren(
-    ...text.split(/\n{2,}/).map((paragraph) => paragraph.trim()).filter(Boolean).map((paragraph) => el("p", { class: "small muted", text: paragraph }))
-  );
+  $("#summary-title").textContent = pool?.paused ? t("summary.paused") : t("summary.title");
+  syncStakeButton();
 }
 function statBox(label, value, hint) {
   return el(
@@ -1982,21 +2085,29 @@ function renderTiers() {
       const onChain = pool?.tiers[index];
       const aprBps = onChain ? onChain.aprBps : BigInt(tier.aprBps);
       const lockSecs = onChain ? Number(onChain.lockSecs) : tier.lockSecs;
+      const label = tier.key ? t(`tier.${tier.key}`) : tier.label;
+      const lockText = lockSecs === 0 ? t("tiers.unlockAnytime") : t("tiers.lockedDays", { days: Math.round(lockSecs / 86400) });
       const card = el(
         "div",
-        { class: `tier${state.selectedTier === index ? " is-active" : ""}`, role: "button", tabindex: "0" },
+        {
+          class: `tier${state.selectedTier === index ? " is-active" : ""}`,
+          role: "button",
+          tabindex: "0"
+        },
         el(
           "div",
           { class: "tier__main" },
           el("span", { class: "tier__apr", text: formatBps(aprBps) }),
-          el("span", { class: "tier__meta", text: `${tier.label} \xB7 ${lockSecs === 0 ? "\u968F\u65F6\u53EF\u89E3\u9664" : `\u9501\u4ED3 ${Math.round(lockSecs / 86400)} \u5929`}` })
+          el("span", { class: "tier__meta", text: `${label} \xB7 ${lockText}` })
         ),
-        el("span", { class: "tier__meta", text: onChain?.enabled === false ? "\u672A\u542F\u7528" : "\u9009\u62E9" })
+        el("span", {
+          class: "tier__meta",
+          text: onChain?.enabled === false ? t("tiers.disabled") : t("tiers.select")
+        })
       );
       const select = () => {
         state.selectedTier = index;
         renderTiers();
-        renderStakeHint();
       };
       card.addEventListener("click", select);
       card.addEventListener("keydown", (event) => {
@@ -2014,21 +2125,27 @@ function renderStakeHint() {
   const now = nowSeconds();
   let amount = 0n;
   try {
-    amount = parseTokens($("#amount").value, config.token.decimals);
+    amount = parseAmount($("#amount").value);
   } catch {
     amount = 0n;
   }
   const reward = amount > 0n ? maxReward(amount, tier.aprBps, tier.capSecs) : 0n;
-  const unlock = Number(tier.lockSecs) === 0 ? "\u968F\u65F6\u53EF\u89E3\u9664" : formatDateTime(now + Number(tier.lockSecs));
+  const unlock = Number(tier.lockSecs) === 0 ? t("tiers.unlockAnytime") : formatDateTime(now + Number(tier.lockSecs));
   $("#amount-hint").replaceChildren(
-    el("span", { class: "small muted", text: `\u6700\u574F\u60C5\u51B5\u5956\u52B1\uFF1A${formatTokens(reward, config.token.decimals)} ${config.token.symbol}` }),
+    el("span", {
+      class: "small muted",
+      text: t("amount.hintReward", {
+        amount: formatTokens(reward, config.token.decimals),
+        symbol: config.token.symbol
+      })
+    }),
     el("span", { class: "spacer" }),
-    el("span", { class: "small muted", text: `\u5230\u671F\uFF1A${unlock}` })
+    el("span", { class: "small muted", text: t("amount.hintUnlock", { time: unlock }) })
   );
   const minimum = formatTokens(pool.minStake, config.token.decimals, 9);
   if (amount > 0n && amount < pool.minStake) {
-    setStatus(`\u6700\u5C0F\u8D28\u62BC\u6570\u91CF\u4E3A ${minimum} ${config.token.symbol}`, "error");
-  } else {
+    setStatus(t("status.minStake", { amount: minimum, symbol: config.token.symbol }), "error");
+  } else if (amount > 0n) {
     setStatus("", "info");
   }
 }
@@ -2036,11 +2153,11 @@ function renderPositions() {
   const host = $("#positions");
   const now = nowSeconds();
   if (!state.wallet) {
-    host.replaceChildren(el("p", { class: "muted small", text: "\u8FDE\u63A5\u94B1\u5305\u540E\u663E\u793A\u4F60\u7684\u4ED3\u4F4D\u3002" }));
+    host.replaceChildren(el("p", { class: "muted small", text: t("positions.connect") }));
     return;
   }
   if (state.positions.length === 0) {
-    host.replaceChildren(el("p", { class: "muted small", text: "\u8FD8\u6CA1\u6709\u8D28\u62BC\u4ED3\u4F4D\u3002" }));
+    host.replaceChildren(el("p", { class: "muted small", text: t("positions.empty") }));
     return;
   }
   host.replaceChildren(
@@ -2056,14 +2173,22 @@ function renderPositions() {
       const remaining = Number(position.unlockTs) - now;
       const claimButton = el(
         "button",
-        { class: "btn btn--ghost btn--small", type: "button", onclick: (event) => onClaim(position, event.currentTarget) },
-        pending > 0n ? `\u9886\u53D6 ${formatTokens(pending, config.token.decimals)}` : "\u6682\u65E0\u53EF\u9886\u53D6"
+        {
+          class: "btn btn--ghost btn--small",
+          type: "button",
+          onclick: (event) => onClaim(position, event.currentTarget)
+        },
+        pending > 0n ? t("positions.claim", { amount: formatTokens(pending, config.token.decimals) }) : t("positions.nothing")
       );
       claimButton.disabled = pending === 0n;
       const unstakeButton = el(
         "button",
-        { class: "btn btn--small", type: "button", onclick: (event) => onUnstake(position, event.currentTarget) },
-        "\u89E3\u9664\u8D28\u62BC"
+        {
+          class: "btn btn--small",
+          type: "button",
+          onclick: (event) => onUnstake(position, event.currentTarget)
+        },
+        t("positions.unstake")
       );
       unstakeButton.disabled = !unlocked;
       return el(
@@ -2072,17 +2197,30 @@ function renderPositions() {
         el(
           "div",
           { class: "position__head" },
-          el("span", { class: "position__amount", text: `${formatTokens(position.amount, config.token.decimals)} ${config.token.symbol}` }),
-          el("span", { class: "badge", text: `${tierLabel(position.tier)} \xB7 ${formatBps(position.aprBps)}` })
+          el("span", {
+            class: "position__amount",
+            text: `${formatTokens(position.amount, config.token.decimals)} ${config.token.symbol}`
+          }),
+          el("span", {
+            class: "badge",
+            text: `${tierLabel(position.tier)} \xB7 ${formatBps(position.aprBps)}`
+          })
         ),
         el(
           "div",
           { class: "position__meta" },
-          el("span", { text: `\u5F00\u4ED3\uFF1A${formatDateTime(position.startTs)}` }),
+          el("span", { text: t("positions.opened", { time: formatDateTime(position.startTs) }) }),
           el("span", {
-            text: Number(position.unlockTs) === 0 ? "\u7075\u6D3B\u8D28\u62BC\uFF0C\u968F\u65F6\u53EF\u89E3\u9664" : unlocked ? `\u5DF2\u4E8E ${formatDateTime(position.unlockTs)} \u5230\u671F` : `\u9501\u4ED3\u81F3 ${formatDateTime(position.unlockTs)}\uFF08\u5269\u4F59 ${Math.ceil(remaining / 86400)} \u5929\uFF09`
+            text: Number(position.unlockTs) === 0 ? t("positions.flexible") : unlocked ? t("positions.matured", { time: formatDateTime(position.unlockTs) }) : t("positions.locked", {
+              time: formatDateTime(position.unlockTs),
+              days: Math.ceil(remaining / 86400)
+            })
           }),
-          el("span", { text: `\u5DF2\u9886\uFF1A${formatTokens(position.claimed, config.token.decimals)}` })
+          el("span", {
+            text: t("positions.claimed", {
+              amount: formatTokens(position.claimed, config.token.decimals)
+            })
+          })
         ),
         el("div", { class: "position__actions" }, claimButton, unstakeButton)
       );
@@ -2092,18 +2230,18 @@ function renderPositions() {
 async function onStake(event) {
   const button = event.currentTarget;
   if (!state.wallet) {
-    toast("\u8BF7\u5148\u8FDE\u63A5\u94B1\u5305", "error");
+    toast(t("toast.connectFirst"), "error");
     return;
   }
   let amount;
   try {
-    amount = parseTokens($("#amount").value, config.token.decimals);
+    amount = parseAmount($("#amount").value);
   } catch (error) {
     toast(error.message, "error");
     return;
   }
   if (amount <= 0n) {
-    toast("\u8BF7\u8F93\u5165\u8D28\u62BC\u6570\u91CF", "error");
+    toast(t("toast.enterAmount"), "error");
     return;
   }
   const pool = state.pool;
@@ -2113,128 +2251,197 @@ async function onStake(event) {
   const unlockTs = Number(tier.lockSecs) === 0 ? 0 : nowSeconds() + Number(tier.lockSecs);
   const commitment = maxReward(amount, tier.aprBps, tier.capSecs);
   const confirmed = await reviewTransaction({
-    title: "\u786E\u8BA4\u8D28\u62BC",
-    subtitle: "\u4EA4\u6613\u5C06\u7531\u4F60\u7684\u94B1\u5305\u7B7E\u540D\uFF0C\u4EE3\u5E01\u4ECE\u4F60\u7684\u8D26\u6237\u8F6C\u5165\u8D28\u62BC\u5408\u7EA6\u91D1\u5E93\u3002",
+    title: t("review.stake.title"),
+    subtitle: t("review.stake.subtitle"),
     rows: [
-      ["\u8D28\u62BC\u671F\u9650", `${tierLabel(state.selectedTier)}\uFF08${formatDuration(tier.lockSecs)}\uFF09`],
-      ["APR", formatBps(tier.aprBps)],
-      ["\u8D28\u62BC\u6570\u91CF", `${formatTokens(amount, config.token.decimals)} ${config.token.symbol}`],
-      ["\u5230\u671F\u65F6\u95F4", unlockTs === 0 ? "\u968F\u65F6\u53EF\u89E3\u9664" : formatDateTime(unlockTs)],
-      ["\u9884\u7559\u5956\u52B1\uFF08\u6700\u574F\u60C5\u51B5\uFF09", formatTokens(commitment, config.token.decimals)],
-      ["\u4F60\u7684\u94B1\u5305", shorten(owner.toBase58(), 6, 6)],
-      ["\u5408\u7EA6", shorten(config.staking.programId, 6, 6)]
+      [
+        t("review.stake.term"),
+        `${tierLabel(state.selectedTier)} (${durationLabel(tier.lockSecs)})`
+      ],
+      [t("review.stake.apr"), formatBps(tier.aprBps)],
+      [
+        t("review.stake.amount"),
+        `${formatTokens(amount, config.token.decimals)} ${config.token.symbol}`
+      ],
+      [
+        t("review.stake.unlock"),
+        unlockTs === 0 ? t("tiers.unlockAnytime") : formatDateTime(unlockTs)
+      ],
+      [t("review.stake.commitment"), formatTokens(commitment, config.token.decimals)],
+      [t("review.stake.wallet"), shorten(owner.toBase58(), 6, 6)],
+      [t("review.stake.contract"), shorten(config.staking.programId, 6, 6)]
     ],
-    risks: [
-      "\u9501\u4ED3\u671F\u95F4\u672C\u91D1\u4E0D\u53EF\u63D0\u53D6\uFF0C\u5230\u671F\u524D\u65E0\u6CD5\u89E3\u9664\u3002",
-      "\u53D1\u653E\u5956\u52B1\u53D6\u51B3\u4E8E\u5956\u52B1\u6C60\u4F59\u989D\uFF0C\u5408\u7EA6\u4F1A\u62D2\u7EDD\u8D85\u51FA\u9884\u7B97\u7684\u8D28\u62BC\u3002",
-      "APR \u53EA\u662F\u53C2\u6570\uFF0C\u4E0D\u6784\u6210\u6536\u76CA\u627F\u8BFA\u3002"
-    ]
+    risks: [t("review.stake.risk1"), t("review.stake.risk2"), t("review.stake.risk3")],
+    confirmLabel: t("modal.confirm"),
+    cancelLabel: t("common.cancel"),
+    riskTitle: t("modal.riskTitle")
   });
   if (!confirmed) return;
-  await withBusy(button, async () => {
-    try {
-      const ix = ixStake({
-        owner,
-        userState: userStatePda(owner),
-        position: positionPda(owner, nonce),
-        ownerAta: getAssociatedTokenAddressSync(new PublicKey(pool.mint), owner),
-        principalVault: new PublicKey(pool.principalVault),
-        rewardVault: new PublicKey(pool.rewardVault),
-        tier: state.selectedTier,
-        amount,
-        nonce
-      });
-      const { Transaction } = await import("./index.browser.esm-25CM7TUS.js");
-      const tx = new Transaction().add(ix);
-      tx.feePayer = owner;
-      const signature = await signAndSend(state.connection, tx, state.wallet);
-      toast(`\u8D28\u62BC\u6210\u529F\uFF1A${shorten(signature)}`, "ok");
-      $("#amount").value = "";
-      await refresh();
-    } catch (error) {
-      toast(decodeError(error), "error");
-    }
-  });
+  await withBusy(
+    button,
+    async () => {
+      try {
+        const ix = ixStake({
+          owner,
+          userState: userStatePda(owner),
+          position: positionPda(owner, nonce),
+          ownerAta: getAssociatedTokenAddressSync(new PublicKey(pool.mint), owner),
+          principalVault: new PublicKey(pool.principalVault),
+          rewardVault: new PublicKey(pool.rewardVault),
+          tier: state.selectedTier,
+          amount,
+          nonce
+        });
+        const { Transaction } = await import("./index.browser.esm-25CM7TUS.js");
+        const tx = new Transaction().add(ix);
+        tx.feePayer = owner;
+        const signature = await signAndSend(state.connection, tx, state.wallet);
+        toast(t("toast.stakeSuccess", { sig: shorten(signature) }), "ok");
+        $("#amount").value = "";
+        await refresh();
+      } catch (error) {
+        toast(decodeError(error), "error");
+      }
+    },
+    t("common.processing")
+  );
 }
 async function onClaim(position, button) {
   const owner = state.wallet.publicKey;
   const now = nowSeconds();
-  const pending = claimable(position.amount, position.aprBps, now - Number(position.startTs), position.capSecs, position.claimed);
+  const pending = claimable(
+    position.amount,
+    position.aprBps,
+    now - Number(position.startTs),
+    position.capSecs,
+    position.claimed
+  );
   const confirmed = await reviewTransaction({
-    title: "\u9886\u53D6\u5956\u52B1",
-    subtitle: "\u53EA\u8F6C\u79FB\u5DF2\u7D2F\u79EF\u7684\u5956\u52B1\uFF0C\u672C\u91D1\u7559\u5728\u5408\u7EA6\u4E2D\u7EE7\u7EED\u8BA1\u606F\u3002",
+    title: t("review.claim.title"),
+    subtitle: t("review.claim.subtitle"),
     rows: [
-      ["\u4ED3\u4F4D", `${tierLabel(position.tier)} \xB7 ${formatTokens(position.amount, config.token.decimals)} ${config.token.symbol}`],
-      ["\u672C\u6B21\u9886\u53D6", `${formatTokens(pending, config.token.decimals)} ${config.token.symbol}`],
-      ["\u63A5\u6536\u5730\u5740", shorten(owner.toBase58(), 6, 6)]
+      [
+        t("review.claim.position"),
+        `${tierLabel(position.tier)} \xB7 ${formatTokens(position.amount, config.token.decimals)} ${config.token.symbol}`
+      ],
+      [
+        t("review.claim.amount"),
+        `${formatTokens(pending, config.token.decimals)} ${config.token.symbol}`
+      ],
+      [t("review.claim.receiver"), shorten(owner.toBase58(), 6, 6)]
     ],
-    risks: ["\u9886\u53D6\u540E\u8BE5\u6BB5\u65F6\u95F4\u7684\u5956\u52B1\u5F52\u96F6\uFF0C\u4ED3\u4F4D\u7EE7\u7EED\u6309\u539F APR \u7D2F\u79EF\u3002"]
+    risks: [t("review.claim.risk1")],
+    confirmLabel: t("modal.confirm"),
+    cancelLabel: t("common.cancel"),
+    riskTitle: t("modal.riskTitle")
   });
   if (!confirmed) return;
-  await withBusy(button, async () => {
-    try {
-      const ix = ixClaim({
-        owner,
-        userState: userStatePda(owner),
-        position: new PublicKey(position.address),
-        ownerAta: getAssociatedTokenAddressSync(new PublicKey(state.pool.mint), owner),
-        rewardVault: new PublicKey(state.pool.rewardVault),
-        nonce: position.nonce
-      });
-      const { Transaction } = await import("./index.browser.esm-25CM7TUS.js");
-      const tx = new Transaction().add(ix);
-      tx.feePayer = owner;
-      const signature = await signAndSend(state.connection, tx, state.wallet);
-      toast(`\u5DF2\u9886\u53D6\uFF1A${shorten(signature)}`, "ok");
-      await refresh();
-    } catch (error) {
-      toast(decodeError(error), "error");
-    }
-  });
+  await withBusy(
+    button,
+    async () => {
+      try {
+        const ix = ixClaim({
+          owner,
+          userState: userStatePda(owner),
+          position: new PublicKey(position.address),
+          ownerAta: getAssociatedTokenAddressSync(new PublicKey(state.pool.mint), owner),
+          rewardVault: new PublicKey(state.pool.rewardVault),
+          nonce: position.nonce
+        });
+        const { Transaction } = await import("./index.browser.esm-25CM7TUS.js");
+        const tx = new Transaction().add(ix);
+        tx.feePayer = owner;
+        const signature = await signAndSend(state.connection, tx, state.wallet);
+        toast(t("toast.claimSuccess", { sig: shorten(signature) }), "ok");
+        await refresh();
+      } catch (error) {
+        toast(decodeError(error), "error");
+      }
+    },
+    t("common.processing")
+  );
 }
 async function onUnstake(position, button) {
   const owner = state.wallet.publicKey;
   const unlocked = nowSeconds() >= Number(position.unlockTs);
   if (!unlocked) {
-    toast("\u9501\u4ED3\u671F\u672A\u7ED3\u675F\uFF0C\u65E0\u6CD5\u89E3\u9664", "error");
+    toast(t("toast.locked"), "error");
     return;
   }
   const now = nowSeconds();
-  const pending = claimable(position.amount, position.aprBps, now - Number(position.startTs), position.capSecs, position.claimed);
+  const pending = claimable(
+    position.amount,
+    position.aprBps,
+    now - Number(position.startTs),
+    position.capSecs,
+    position.claimed
+  );
   const confirmed = await reviewTransaction({
-    title: "\u89E3\u9664\u8D28\u62BC",
-    subtitle: "\u672C\u91D1\u4E0E\u672A\u9886\u53D6\u5956\u52B1\u4F1A\u4E00\u8D77\u56DE\u5230\u4F60\u7684\u94B1\u5305\uFF0C\u4ED3\u4F4D\u8D26\u6237\u5173\u95ED\u3002",
+    title: t("review.unstake.title"),
+    subtitle: t("review.unstake.subtitle"),
     rows: [
-      ["\u4ED3\u4F4D", `${tierLabel(position.tier)} \xB7 ${formatTokens(position.amount, config.token.decimals)} ${config.token.symbol}`],
-      ["\u672C\u91D1", `${formatTokens(position.amount, config.token.decimals)} ${config.token.symbol}`],
-      ["\u672A\u9886\u53D6\u5956\u52B1", `${formatTokens(pending, config.token.decimals)} ${config.token.symbol}`],
-      ["\u63A5\u6536\u5730\u5740", shorten(owner.toBase58(), 6, 6)]
+      [
+        t("review.unstake.position"),
+        `${tierLabel(position.tier)} \xB7 ${formatTokens(position.amount, config.token.decimals)} ${config.token.symbol}`
+      ],
+      [
+        t("review.unstake.principal"),
+        `${formatTokens(position.amount, config.token.decimals)} ${config.token.symbol}`
+      ],
+      [
+        t("review.unstake.unclaimed"),
+        `${formatTokens(pending, config.token.decimals)} ${config.token.symbol}`
+      ],
+      [t("review.unstake.receiver"), shorten(owner.toBase58(), 6, 6)]
     ],
-    risks: ["\u89E3\u9664\u540E\u8BE5\u4ED3\u4F4D\u4E0D\u518D\u8BA1\u606F\uFF1B\u5982\u9700\u7EE7\u7EED\u8D28\u62BC\u9700\u91CD\u65B0\u5F00\u4ED3\uFF0C\u6309\u5F53\u65F6 APR \u6267\u884C\u3002"]
+    risks: [t("review.unstake.risk1")],
+    confirmLabel: t("modal.confirm"),
+    cancelLabel: t("common.cancel"),
+    riskTitle: t("modal.riskTitle")
   });
   if (!confirmed) return;
-  await withBusy(button, async () => {
-    try {
-      const ix = ixUnstake({
-        owner,
-        userState: userStatePda(owner),
-        position: new PublicKey(position.address),
-        ownerAta: getAssociatedTokenAddressSync(new PublicKey(state.pool.mint), owner),
-        principalVault: new PublicKey(state.pool.principalVault),
-        rewardVault: new PublicKey(state.pool.rewardVault),
-        nonce: position.nonce
-      });
-      const { Transaction } = await import("./index.browser.esm-25CM7TUS.js");
-      const tx = new Transaction().add(ix);
-      tx.feePayer = owner;
-      const signature = await signAndSend(state.connection, tx, state.wallet);
-      toast(`\u5DF2\u89E3\u9664\uFF1A${shorten(signature)}`, "ok");
-      await refresh();
-    } catch (error) {
-      toast(decodeError(error), "error");
-    }
-  });
+  await withBusy(
+    button,
+    async () => {
+      try {
+        const ix = ixUnstake({
+          owner,
+          userState: userStatePda(owner),
+          position: new PublicKey(position.address),
+          ownerAta: getAssociatedTokenAddressSync(new PublicKey(state.pool.mint), owner),
+          principalVault: new PublicKey(state.pool.principalVault),
+          rewardVault: new PublicKey(state.pool.rewardVault),
+          nonce: position.nonce
+        });
+        const { Transaction } = await import("./index.browser.esm-25CM7TUS.js");
+        const tx = new Transaction().add(ix);
+        tx.feePayer = owner;
+        const signature = await signAndSend(state.connection, tx, state.wallet);
+        toast(t("toast.unstakeSuccess", { sig: shorten(signature) }), "ok");
+        await refresh();
+      } catch (error) {
+        toast(decodeError(error), "error");
+      }
+    },
+    t("common.processing")
+  );
 }
+onLangChange(() => {
+  const badge = $("#network-badge");
+  if (badge) {
+    badge.textContent = config.network === "mainnet-beta" ? t("network.mainnet") : config.network;
+  }
+  updateConnectButton();
+  updateAmountLabel();
+  renderFooter();
+  renderSummary();
+  renderTiers();
+  renderPositions();
+  if (!state.pool) {
+    const noWallet = detectProviders().length === 0;
+    setStatus(noWallet ? walletHintText() : t("status.poolMissing"), noWallet ? "info" : "error");
+  }
+});
 window.addEventListener("aura:refresh", refresh);
 $("#amount").addEventListener("input", renderStakeHint);
 //# sourceMappingURL=user.js.map
