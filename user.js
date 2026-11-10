@@ -11,8 +11,9 @@ import {
   userStatePda
 } from "./chunk-QEHLEXUR.js";
 import {
-  getAssociatedTokenAddressSync
-} from "./chunk-OMTDKMSZ.js";
+  getAssociatedTokenAddressSync,
+  readTokenAmountOrZero
+} from "./chunk-VR7CWCWW.js";
 import {
   formatBps,
   formatDateTime,
@@ -135,8 +136,7 @@ async function loadBalance(owner, pool) {
   if (!pool) return 0n;
   const ata = getAssociatedTokenAddressSync(new PublicKey(pool.mint), owner);
   try {
-    const balance = await state.connection.getTokenAccountBalance(ata, "confirmed");
-    return BigInt(balance.value.amount);
+    return await readTokenAmountOrZero(state.connection, ata);
   } catch {
     return 0n;
   }
