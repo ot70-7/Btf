@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <script>window.__AURA_CONFIG__={"network":"mainnet-beta","rpc":"https://solana-rpc.publicnode.com","token":{"name":"BUY THE FUTURE","symbol":"BTF","decimals":9,"supply":"1000000000","mint":"bWkp8s7e1AuYffULoa5arqzxgoymxK2SnhP79JPMUe8","projectWallet":"FW7zSDTrpYJhGuoy8nkABR77Kwzu2z8ovLdmR5WFthgs","description":"BTF — BUY THE FUTURE.\n\nBUY THE FUTURE. BUILD THE NEXT WORLD.\n\nBTF is more than a token. It represents a vision of a new digital future.\n\nWe believe the future is not something we wait for — it is something we build together.\n\nStarting with a community-driven digital asset, BTF aims to grow into a broader ecosystem through technology, innovation, and global participation.\n\nOur ambition is to build beyond a token: toward a connected digital economy, an independent network, and ultimately a new generation of blockchain infrastructure.\n\nOne Vision. One Community. One Future.\n\nBTF — BUY THE FUTURE.","logo":"assets/logo.png","logoUrl":"","website":"","x":"","telegram":"https://t.me/buythefuture"},"staking":{"_comment":"programId is a placeholder. Replace it with the ID printed by `anchor keys sync` before any deploy.","programId":"2wfUZNSyWqsu7ZkyUeqSJWyZP62ohHWoN7tAHDA3Z6SN","minStake":"1","tiers":[{"key":"flex","label":"灵活质押","aprBps":300,"lockSecs":0,"capSecs":31536000},{"key":"d30","label":"30 天","aprBps":500,"lockSecs":2592000,"capSecs":2592000},{"key":"d90","label":"90 天","aprBps":800,"lockSecs":7776000,"capSecs":7776000},{"key":"d180","label":"180 天","aprBps":1200,"lockSecs":15552000,"capSecs":15552000},{"key":"d360","label":"360 天","aprBps":1500,"lockSecs":31104000,"capSecs":31104000}]},"distribution":[{"label":"初始流动性","pct":10,"wallet":""},{"label":"社区及生态","pct":10,"wallet":""},{"label":"质押奖励储备","pct":10,"wallet":""},{"label":"项目发展储备/长期质押","pct":50,"wallet":""},{"label":"社区激励","pct":20,"wallet":""}]};</script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0d12" />
+    <title>BTF 质押</title>
+    <link rel="icon" type="image/png" href="./assets/favicon.png" />
+    <meta property="og:title" content="BUY THE FUTURE (BTF)" />
+    <meta property="og:description" content="BUY THE FUTURE. BUILD THE NEXT WORLD." />
+    <meta property="og:image" content="./assets/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="app">
+      <span class="brand"><img src="./assets/logo.png" alt="BTF" width="22" height="22" /> BTF 质押</span>
+      <span class="badge" id="network-badge">—</span>
+      <span class="spacer"></span>
+      <button class="btn btn--small" id="connect" type="button">连接钱包</button>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2 id="summary-title">我的资产</h2>
+        <div id="summary"></div>
+        <p class="status" id="status">连接钱包后读取链上数据。</p>
+      </section>
+
+      <section class="card">
+        <h2>选择质押期限</h2>
+        <div class="tiers" id="tiers"></div>
+        <div class="stack" style="margin-top: 12px">
+          <label class="field">
+            质押数量（<span id="symbol-label">BTF</span>）
+            <input id="amount" inputmode="decimal" autocomplete="off" placeholder="0.00" />
+          </label>
+          <div class="row">
+            <button class="btn btn--ghost btn--small" id="max" type="button">全部余额</button>
+            <span class="spacer"></span>
+          </div>
+          <div class="row small muted" id="amount-hint"></div>
+          <button class="btn" id="stake" type="button">确认质押</button>
+          <p class="small muted">
+            质押会把代币转入合约金库。锁仓档位到期前无法取回本金；到期后本金与未领奖励可一起取回。
+          </p>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>我的质押</h2>
+        <div class="positions" id="positions"></div>
+      </section>
+
+      <section class="card">
+        <h2>关于 BTF</h2>
+        <div class="about" id="about"></div>
+      </section>
+
+      <section class="card">
+        <h2>规则说明</h2>
+        <ul class="small muted" style="padding-left: 18px; margin: 0; display: grid; gap: 6px">
+          <li>奖励全部来自项目方预先存入的奖励金库，不会增发新代币。</li>
+          <li>每笔质押在开仓时锁定当时的 APR，之后项目方调整 APR 不影响已开仓位。</li>
+          <li>奖励按秒线性累计，最多累计到该档位的计息窗口结束（灵活档为 365 天）。</li>
+          <li>奖励池不足以覆盖新仓位的最大应付奖励时，新质押会被合约拒绝。</li>
+          <li>合约没有任何让项目方提取用户本金或已承诺奖励的指令。</li>
+        </ul>
+      </section>
+    </main>
+
+    <div id="toasts"></div>
+
+    <nav class="bottom">
+      <a href="./index.html" class="is-active">质押</a>
+      <a href="./admin.html">管理</a>
+      <a href="./issuance.html">发行</a>
+    </nav>
+
+    <script type="module" src="./user.js"></script>
+  </body>
+</html>
