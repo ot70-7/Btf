@@ -285,33 +285,33 @@ async function buildPlanInner() {
   if (recipients.length === 0) {
     return toast("\u6CA1\u6709\u7B26\u5408\u6761\u4EF6\u7684\u5730\u5740", "error");
   }
+  const deliverable = recipients.filter((row) => ataFor(row.owner));
+  const notDeliverable = recipients.length - deliverable.length;
+  if (deliverable.length === 0) {
+    throw new Error("\u540D\u5355\u4E2D\u6CA1\u6709\u53EF\u63A5\u6536\u4EE3\u5E01\u7684\u94B1\u5305\u5730\u5740\uFF08\u53EF\u80FD\u586B\u4E86\u4EE3\u5E01\u8D26\u6237\u6216\u7A0B\u5E8F\u5730\u5740\uFF09");
+  }
+  const existing = await checkAtas(deliverable.map((row) => row.owner));
+  const createMissing = $("#create-atas").checked;
+  const pool = createMissing ? deliverable : deliverable.filter((row) => existing.has(row.owner));
+  const missingAtas = deliverable.length - existing.size;
+  if (pool.length === 0) {
+    throw new Error("\u540D\u5355\u4E2D\u7684\u5730\u5740\u90FD\u8FD8\u6CA1\u6709\u4EE3\u5E01\u8D26\u6237\uFF0C\u8BF7\u52FE\u9009\u201C\u4E3A\u7F3A\u5931\u8D26\u6237\u521B\u5EFA\u201D\u6216\u5148\u8BA9\u4ED6\u4EEC\u6301\u6709 BTF");
+  }
   const mode = $("#mode").value;
   let rows = [];
   try {
     if (mode === "fixed") {
       const per = parseTokens($("#per-wallet").value || "0", decimals);
-      const budget = per * BigInt(recipients.length);
-      rows = planFixed(recipients, per, budget);
+      rows = planFixed(pool, per, per * BigInt(pool.length));
     } else {
       const budget = parseTokens($("#budget").value || "0", decimals);
       if (budget <= 0n) return toast("\u8BF7\u586B\u5199\u53D1\u653E\u603B\u91CF", "error");
-      rows = mode === "equal" ? planEqual(recipients, budget) : planProportional(recipients, budget);
+      rows = mode === "equal" ? planEqual(pool, budget) : planProportional(pool, budget);
     }
   } catch (error) {
     return toast(error.message, "error");
   }
   if (rows.length === 0) return toast("\u65B9\u6848\u4E3A\u7A7A", "error");
-  const deliverable = rows.filter((row) => ataFor(row.owner));
-  const skipped = rows.length - deliverable.length;
-  if (deliverable.length === 0) {
-    throw new Error("\u540D\u5355\u4E2D\u6CA1\u6709\u53EF\u63A5\u6536\u4EE3\u5E01\u7684\u94B1\u5305\u5730\u5740\uFF08\u53EF\u80FD\u586B\u4E86\u4EE3\u5E01\u8D26\u6237\u6216\u7A0B\u5E8F\u5730\u5740\uFF09");
-  }
-  if (skipped > 0) {
-    setStatus(`\u5DF2\u8DF3\u8FC7 ${skipped} \u4E2A\u65E0\u6CD5\u63A5\u6536\u4EE3\u5E01\u7684\u5730\u5740\uFF08\u4EE3\u5E01\u8D26\u6237/\u7A0B\u5E8F\u5730\u5740\uFF09`, "error");
-  }
-  rows = deliverable;
-  const existing = await checkAtas(rows.map((row) => row.owner));
-  const createMissing = $("#create-atas").checked;
   const cost = estimateCost({
     recipients: rows,
     existingAtas: existing,
@@ -327,7 +327,8 @@ async function buildPlanInner() {
     kv("\u53D1\u653E\u603B\u91CF", `${formatTokens(total, decimals)} BTF`),
     kv("\u4EBA\u5747", `${formatTokens(rows[0].payout, decimals)} ~ ${formatTokens(rows[rows.length - 1].payout, decimals)} BTF`),
     kv("\u6279\u6B21", `${cost.batches} \u6279\uFF08\u6BCF\u6279 ${BATCH_SIZE} \u4E2A\uFF0C\u6BCF\u6279\u7B7E\u540D\u4E00\u6B21\uFF09`),
-    kv("\u7F3A\u5C11\u4EE3\u5E01\u8D26\u6237", `${cost.missingAtas} \u4E2A${createMissing ? "\uFF08\u5C06\u521B\u5EFA\uFF09" : "\uFF08\u5C06\u8DF3\u8FC7\uFF09"}`),
+    kv("\u7F3A\u5C11\u4EE3\u5E01\u8D26\u6237", `${cost.missingAtas} \u4E2A${createMissing ? "\uFF08\u5C06\u521B\u5EFA\uFF09" : "\uFF08\u5DF2\u6392\u9664\uFF0C\u4E0D\u4F1A\u53D1\u653E\uFF09"}`),
+    notDeliverable > 0 ? kv("\u8DF3\u8FC7\u5730\u5740", `${notDeliverable} \u4E2A\uFF08\u4EE3\u5E01\u8D26\u6237\u6216\u7A0B\u5E8F\u5730\u5740\uFF09`) : null,
     kv(
       "\u94FE\u4E0A\u6210\u672C",
       `\u2248 ${(Number(cost.totalLamports) / 1e9).toFixed(6)} SOL${cost.ataRentLamports > 0n ? "\uFF08\u542B\u8D26\u6237\u79DF\u91D1\uFF09" : "\uFF08\u4EC5\u624B\u7EED\u8D39\uFF09"}`
